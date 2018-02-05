@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% load search_helpers %}
+
+{% block "body" %}
+<div id="content" class="list">
+
+  <section class="search">
+    <form action="{% url "qa-search" %}" method="GET">
+      <input type="text" name="q" results="5" autosave="stack" placeholder="Type your query and press enter..." value="{{ search.query_string|default:"" }}" />
+      <button type="submit">Search</button>
+
+      {% if search %}
+        <div class="facet">
+          <span class="facet-label">Months</span>
+          <ul class="months">
+            {% for month, count, selected in search.facets.months %}
+              <li class="{% if selected %}selected{% endif %}">
+                <input type="checkbox" name="months" id="months-{{ forloop.counter }}" value="{{ month|date:"Y-m" }}"{% if selected %} checked="true"{% endif %}>
+                <label for="months-{{ forloop.counter }}">{{ month|date:"F Y" }} <span class="count">{{ count }}</span></label>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div class="facet">
+          <span class="facet-label">Tags</span>
+          <ul class="tags">
+            {% for t, count, selected in search.facets.tags %}
+              <li class="{% if selected %}selected{% endif %}">
+                <input type="checkbox" name="tags" id="tags-{{ t}}" value="{{ t }}"{% if selected %} checked="true"{% endif %}>
+                <label for="tags-{{ t }}">{{ t }} <span class="count">{{ count }}</span></label>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div style="clear:both"></div>
+      {% endif %}
+    </form>
+  </section>
+
+  <section class="questions">
+    {% for question in object_list %}
+      <div class="question">
+        <h2>
+            <a href="{% url "qa-question" pk=question.id %}">
+                {% if question.meta.highlight.title %}
+                    {{ question.meta.highlight.title.0|safe }}
+                {% else %}
+                    {{ question.title }}
+                {% endif %}
+            </a>
+        </h2>
+
+        <div class="highlights">
+            {% if question.meta.highlight.body %}
+                &hellip; {{ question.meta.highlight.body|highlight_fragments }} &hellip;
+            {% endif %}
+            {% if question.meta.inner_hits.answer.hits.hits.0.highlight.body %}
+                {% if not question.meta.highlight.body %} &hellip; {% endif %}
+                {{ question.meta.inner_hits.answer.hits.hits.0.highlight.body|highlight_fragments }}
+                &hellip;
+            {% endif %}
+        </div>
+
+        <div class="meta">
+          Asked
+          by <span class="author">{{ question.owner.display_name }}</span>
+          on <span class="date">{{ question.creation_date|date }}, {{ question.creation_date|time }}</span>
+          {% for t in question.tags %}
+              <span class="tag"><a href="{% url "qa-search" %}?tags={{ t }}">{{ t }}</a></span>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </section>
+
+  <section class="pagination">
+    <span class="step-links">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="next">&laquo; previous</a>
+      {% endif %}
+
+      {% for p in paginator.page_range %}
+        <a href="?page={{ p }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"{% ifequal p page_obj.number %} class="current"{% endifequal %}>{{ p }}</a>
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="next">next &raquo;</a>
+     {% endif %}
+    </span>
+  </section>
+</div>
+{% endblock %}

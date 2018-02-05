@@ -1,0 +1,14 @@
+src/*
+.*.swp
+*~
+*.pyc
+__pycache__
+venv
+*.py[co]
+.coverage
+*.egg-info
+dist
+*.egg
+db.sqlite3
+data/*
+.DS_Store

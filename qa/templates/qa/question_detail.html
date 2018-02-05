@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block "title" %}
+  {{ object.title }}
+{% endblock %}
+
+{% block "body" %}
+<div id="content">
+  <section class="question detail">
+    <section class="header">
+      <h2>{{ object.title }}</h2>
+      <p class="meta">
+        Asked by <span class="author"><a href="#">{{ object.owner.display_name }}</a></span>
+        on <span class="date">{{ object.creation_date|date }}, {{ object.creation_date|time }}</span>
+        {% if object.tags %}
+          <span class="tags">
+            {% for t in object.tags %}
+              <span class="tag"><a href="{% url "qa-search" %}?tags={{ t }}">{{ t }}</a></span>
+            {% endfor %}
+          </span>
+        {% endif %}
+      </p>
+    </section>
+
+    <section class="body">
+      {{ object.body|safe }}
+    </section>
+
+    {% include "qa/comments.html" with comments=object.comments%}
+
+  </section>
+
+  <section class="answers">
+    {% for answer in object.answers %}
+      <div class="answer{% ifequal answer.pk object.accepted_answer_id %} accepted{% endifequal %}">
+        <p class="meta">
+          {% ifequal answer.pk object.accepted_answer_id %}Accepted a{% else %}A{% endifequal %}nswer by
+          <span class="author">{{ answer.owner.display_name }}</span>
+          on <span class="date">{{ answer.creation_date|date }}, {{ answer.creation_date|time }}</span>
+          {% if answer.score %}
+              with score {{ answer.score }}
+          {% endif %}
+        </p>
+
+        <div class="body">
+          {{answer.body|safe}}
+        </div>
+
+        {% include "qa/comments.html" with comments=answer.comments%}
+      </div>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}
